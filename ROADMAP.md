@@ -1,9 +1,9 @@
 # safeshell Project Roadmap
 
-**Mission:** Empower AI agents with secure, robust, and platform-agnostic shell capabilities.
+**Mission:** Empower AI agents with secure and robust shell capabilities for Unix-like environments.
 
 ## Introduction
-`safeshell` bridges the gap between AI agents and operating system interactions. While traditional subprocess wrappers are unsafe and Docker containers are heavy, `safeshell` provides a graduated security model that works instantly in any Python environment.
+`safeshell` bridges the gap between AI agents and operating system interactions. While traditional subprocess wrappers are unsafe and Docker containers are heavy, `safeshell` provides a graduated security model for Linux and macOS.
 
 ## Current status (v1.0.0)
 
@@ -12,7 +12,7 @@
 - [x] **Graduated Security Levels**:
     - `SecurityLevel.STANDARD`: Blocks known exploits (Default).
     - `SecurityLevel.PARANOID`: Whitelist-only mode for high-risk environments.
-    - `SecurityLevel.PERMISSIVE`: Logging-only mode for trusted debugging.
+    - `SecurityLevel.PERMISSIVE`: Security-bypass mode for trusted debugging.
 - [x] **Read-Only Overlay**: Safely modify files in a temporary layer without treating disk as immutable.
 - [x] **Smart Discovery**: Automatically detects available tools (`grep`, `jq`, `python`) and contextualizes LLM prompts.
 - [x] **Cross-Integration**: First-class support for generic Python usage, LangChain, and PydanticAI.

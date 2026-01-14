@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-`safeshell` gives your LLM agents (LangChain, PydanticAI, or custom) the power to run shell commands with **built-in safety rails**. While traditional subprocess wrappers are unsafe and Docker containers are heavy, `safeshell` provides a graduated security model that works instantly in any Python environment. It features built-in protection against dangerous patterns like `rm -rf /`, `curl | sh`, fork bombs, and more.
+`safeshell` gives your LLM agents (LangChain, PydanticAI, or custom) the power to run shell commands with **built-in safety rails**. While traditional subprocess wrappers are unsafe and Docker containers are heavy, `safeshell` provides a graduated security model for Unix-like environments (Linux, macOS). It features built-in protection against dangerous patterns like `rm -rf /`, `curl | sh`, fork bombs, and more.
 
 ## Roadmap
 
@@ -23,12 +23,12 @@ See our [Detailed Roadmap](ROADMAP.md) for upcoming features like Windows suppor
 ## Features
 
 - **Security-first**: Blocks 20+ dangerous command patterns (`rm -rf /`, fork bombs, etc.) out of the box.
-- **Instant startup**: No Docker or VMs required. Works anywhere Python runs.
+- **Instant startup**: No Docker or VMs required. Works on Linux and macOS.
 - **Three security levels**:
     - `STANDARD`: Blocks known exploits (Default).
     - `PARANOID`: Allowlist-only (e.g., only allow `ls` and `grep`).
-    - `PERMISSIVE`: Logging-only for trusted environments.
-- **Read-only mode**: Agents can "modify" files in a temporary overlay without touching your actual disk.
+    - `PERMISSIVE`: Security-bypass for trusted environments.
+- **Read-only mode**: Agents can "modify" files in an ephemeral temporary workspace without touching your source files.
 - **Dynamic tool discovery**: Automatically generates LLM-optimized prompts based on available tools (`grep`, `jq`, `git`, etc.).
 - **Framework-agnostic**: First-class support for generic Python, LangChain, and PydanticAI.
 
