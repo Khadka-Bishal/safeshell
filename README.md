@@ -2,8 +2,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/safeshell)](...)
 [![CI](https://github.com/Khadka-Bishal/safeshell/actions/workflows/ci.yml/badge.svg)](https://github.com/Khadka-Bishal/safeshell/actions)
 [![License](https://img.shields.io/github/license/Khadka-Bishal/safeshell)](.../LICENSE)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-green)]
-![Status](https://img.shields.io/badge/status-alpha-orange)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-green)](...)
 
 
 **The secure, sandboxed shell for your AI agents.**
