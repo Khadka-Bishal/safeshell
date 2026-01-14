@@ -9,9 +9,7 @@ Uses kernel-level restrictions:
 from __future__ import annotations
 
 import platform
-import subprocess
 from pathlib import Path
-from typing import Sequence
 
 
 def is_landlock_available() -> bool:
@@ -29,7 +27,7 @@ def is_landlock_available() -> bool:
 
 def build_isolated_command(
     command: str,
-    workspace: Path,
+    _workspace: Path,
     allow_network: bool = False,
 ) -> list[str]:
     """
@@ -41,7 +39,7 @@ def build_isolated_command(
 
     Args:
         command: Shell command to run.
-        workspace: Working directory.
+        _workspace: Working directory.
         allow_network: If True, skip network isolation.
 
     Returns:

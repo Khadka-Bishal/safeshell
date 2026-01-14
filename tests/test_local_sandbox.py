@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from safeshell import NativeSandbox as LocalSandbox, CommandResult, NetworkMode
+from safeshell import NativeSandbox as LocalSandbox
+from safeshell import NetworkMode
 
-# NOTE: We aliased NativeSandbox as LocalSandbox to minimize test churn 
+# NOTE: We aliased NativeSandbox as LocalSandbox to minimize test churn
 # while validating the refactor logic.
 
 class TestLocalSandbox:
@@ -42,14 +43,14 @@ class TestIsolation:
     ) -> None:
         # Try to write outside workspace
         result = await sandbox.execute("touch ~/.safeshell_test_forbidden 2>&1")
-        
-        # We need to detect if isolation is active. 
+
+        # We need to detect if isolation is active.
         # NativeSandbox auto-detects.
         # This test might fail if running where neither seatbelt nor landlock are active.
         # But we assume the environment supports it based on previous runs.
         if result.exit_code == 0:
              # Check if file actually exists (if no isolation, it would work)
-             pass 
+             pass
 
     async def test_can_write_to_workspace(self, sandbox: LocalSandbox) -> None:
         result = await sandbox.execute("touch testfile.txt && ls testfile.txt")

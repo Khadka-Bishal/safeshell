@@ -58,25 +58,25 @@ class SeatbeltProfile:
         >>> sbpl = profile.generate()
         >>> # Use with sandbox-exec -p <sbpl> -- <command>
     """
-    
+
     workspace: Path
     """Primary workspace directory with read-write access."""
-    
+
     allow_read_paths: list[Path] = field(default_factory=list)
     """Additional paths to allow read access (beyond system defaults)."""
-    
+
     allow_write_paths: list[Path] = field(default_factory=list)
     """Additional paths to allow write access (beyond workspace)."""
-    
+
     allow_network: bool = False
     """If True, allows outbound network connections."""
-    
+
     allow_network_localhost_only: bool = False
     """If True, allows only localhost network (for proxy mode)."""
-    
+
     network_proxy_port: int | None = None
     """If set, allows network ONLY to localhost:port (Phase 2)."""
-    
+
     def generate(self) -> str:
         """
         Generate the Seatbelt profile in SBPL format.
@@ -90,7 +90,7 @@ class SeatbeltProfile:
         """
         home = Path.home()
         workspace = self.workspace.resolve()
-        
+
         lines: list[str] = [
             "(version 1)",
             "",
@@ -115,7 +115,7 @@ class SeatbeltProfile:
             ")",
             "",
         ]
-        
+
         # Add additional read paths
         if self.allow_read_paths:
             lines.append(";; Additional read paths")
@@ -124,7 +124,7 @@ class SeatbeltProfile:
                 lines.append(f'    (subpath "{path.resolve()}")')
             lines.append(")")
             lines.append("")
-        
+
         # Add additional write paths
         if self.allow_write_paths:
             lines.append(";; Additional write paths")
@@ -133,32 +133,32 @@ class SeatbeltProfile:
                 lines.append(f'    (subpath "{path.resolve()}")')
             lines.append(")")
             lines.append("")
-        
+
         # Mandatory denies - these ALWAYS apply
         lines.append(";; ========== MANDATORY DENIES ==========")
         lines.append(";; These paths are ALWAYS protected (defense in depth)")
         lines.append("")
-        
+
         # Deny specific files
         lines.append(";; Protected config files")
         for filename in MANDATORY_DENY_WRITE_LITERALS:
             filepath = home / filename
             lines.append(f'(deny file-write* (literal "{filepath}"))')
         lines.append("")
-        
+
         # Deny directories
         lines.append(";; Protected directories")
         for dirname in MANDATORY_DENY_WRITE_SUBPATHS:
             dirpath = home / dirname
             lines.append(f'(deny file-write* (subpath "{dirpath}"))')
-        
+
         # Git hooks protection (even inside workspace)
         lines.append("")
         lines.append(";; Git hooks protection (prevents code execution)")
         lines.append(f'(deny file-write* (subpath "{workspace}/.git/hooks"))')
         lines.append(f'(deny file-write* (literal "{workspace}/.git/config"))')
         lines.append("")
-        
+
         # Network rules
         lines.append(";; ========== NETWORK ==========")
         if self.allow_network:
@@ -174,30 +174,30 @@ class SeatbeltProfile:
             lines.append(";; Network BLOCKED (default)")
             lines.append("(deny network*)")
         lines.append("")
-        
+
         # Process execution
         lines.append(";; ========== PROCESS EXECUTION ==========")
         lines.append("(allow process-exec)")
         lines.append("(allow process-fork)")
         lines.append("")
-        
+
         # Mach IPC (required for many macOS operations)
         lines.append(";; Mach IPC (required for subprocess spawning)")
         lines.append("(allow mach-lookup)")
         lines.append("")
-        
+
         # Signals
         lines.append(";; Signal handling")
         lines.append("(allow signal)")
         lines.append("")
-        
+
         # Sysctl (needed for various system calls)
         lines.append(";; System info queries")
         lines.append("(allow sysctl-read)")
         lines.append("")
-        
+
         return "\n".join(lines)
-    
+
     def write_to_file(self, path: Path | None = None) -> Path:
         """
         Write the profile to a file.
@@ -212,7 +212,7 @@ class SeatbeltProfile:
             fd, path_str = tempfile.mkstemp(suffix=".sb", prefix="safeshell_")
             os.close(fd)
             path = Path(path_str)
-        
+
         path.write_text(self.generate(), encoding="utf-8")
         return path
 
@@ -225,10 +225,10 @@ def is_seatbelt_available() -> bool:
         True if running on macOS with sandbox-exec available.
     """
     import platform
-    
+
     if platform.system() != "Darwin":
         return False
-    
+
     try:
         result = subprocess.run(
             ["which", "sandbox-exec"],
@@ -258,7 +258,7 @@ def build_sandboxed_command(
         List of arguments for subprocess.run().
     """
     sbpl = profile.generate()
-    
+
     # sandbox-exec -p <profile> -- <command>
     if shell and isinstance(command, str):
         return [
@@ -268,6 +268,6 @@ def build_sandboxed_command(
             "bash", "-c", command,
         ]
     elif isinstance(command, str):
-        return ["sandbox-exec", "-p", sbpl, "--"] + command.split()
+        return ["sandbox-exec", "-p", sbpl, "--", *command.split()]
     else:
-        return ["sandbox-exec", "-p", sbpl, "--"] + list(command)
+        return ["sandbox-exec", "-p", sbpl, "--", *list(command)]

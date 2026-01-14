@@ -2,20 +2,19 @@
 Top-level facade for Safeshell.
 """
 
-from warnings import warn
-from typing import Optional
 
-from safeshell.types import CommandResult
-from safeshell.errors import SafeShellError, ConfigurationError
-from safeshell.networking import NetworkMode, NetworkAllowlist
+
 from safeshell.core import BaseSandbox
+from safeshell.errors import ConfigurationError, SafeShellError
 from safeshell.sandbox.native import NativeSandbox
+from safeshell.types import CommandResult, NetworkAllowlist, NetworkMode
+
 
 def Sandbox(
-    cwd: str, 
-    *, 
+    cwd: str,
+    *,
     network: NetworkMode = NetworkMode.BLOCKED,
-    allowlist: Optional[NetworkAllowlist] = None,
+    allowlist: NetworkAllowlist | None = None,
     timeout: float = 30.0
 ) -> BaseSandbox:
     """
@@ -28,12 +27,12 @@ def Sandbox(
 
 # Exports
 __all__ = [
-    "Sandbox",
     "BaseSandbox",
-    "NativeSandbox",
     "CommandResult",
-    "NetworkMode",
+    "ConfigurationError",
+    "NativeSandbox",
     "NetworkAllowlist",
+    "NetworkMode",
     "SafeShellError",
-    "ConfigurationError"
+    "Sandbox"
 ]

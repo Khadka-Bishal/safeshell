@@ -6,7 +6,7 @@ Provides a ShellTool that wraps the Sandbox for safe execution.
 
 from __future__ import annotations
 
-from typing import Any, Optional, Type
+from typing import Any
 
 try:
     from langchain_core.tools import BaseTool
@@ -45,14 +45,14 @@ class ShellTool(BaseTool):
         "or package installation. "
         "Blocked operations will return a permission error."
     )
-    args_schema: Type[BaseModel] = ShellToolInput
+    args_schema: type[BaseModel] = ShellToolInput
 
     # Configuration
     cwd: str = Field(default=".", description="Working directory")
     network: NetworkMode = Field(
         default=NetworkMode.BLOCKED, description="Network mode"
     )
-    allowlist: Optional[NetworkAllowlist] = Field(
+    allowlist: NetworkAllowlist | None = Field(
         default=None, description="Network allowlist (if mode is ALLOWLIST)"
     )
     timeout: float = Field(default=30.0, description="Command timeout in seconds")
@@ -78,8 +78,8 @@ class ShellTool(BaseTool):
 
                 if result.exit_code != 0:
                     return f"Error (Exit Code {result.exit_code}):\n{result.stderr}"
-                
+
                 return result.stdout
 
         except Exception as e:
-            return f"Execution Error: {str(e)}"
+            return f"Execution Error: {e!s}"

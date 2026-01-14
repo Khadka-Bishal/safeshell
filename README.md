@@ -5,7 +5,7 @@
 [![Coverage](https://img.shields.io/badge/coverage-100%25-green)](...)
 
 
-**The secure, sandboxed shell for your AI agents.**
+**secure, sandboxed shell for your AI agents.**
 
 Every AI developer eventually faces the same problem: *How do I let my agent run code without destroying my machine?*
 

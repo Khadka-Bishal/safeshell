@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import abc
 from pathlib import Path
-from typing import Optional
 
 from safeshell.types import CommandResult
 
@@ -22,10 +21,10 @@ class BaseSandbox(abc.ABC):
 
     @abc.abstractmethod
     async def execute(
-        self, 
-        command: str, 
-        *, 
-        timeout: Optional[float] = None
+        self,
+        command: str,
+        *,
+        timeout: float | None = None
     ) -> CommandResult:
         """
         Execute a shell command.
