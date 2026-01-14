@@ -1,0 +1,100 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "safeshell"
+version = "1.0.0"
+description = "Secure, sandboxed bash tool access for AI agents"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "Bishal Khadka"}
+]
+keywords = [
+    "ai",
+    "agent",
+    "sandbox",
+    "bash",
+    "security",
+    "langchain",
+    "pydantic-ai",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+langchain = [
+    "langchain-core>=0.3",
+]
+pydantic-ai = [
+    "pydantic-ai>=0.0.15",
+]
+
+[project.urls]
+Homepage = "https://github.com/Khadka-Bishal/safeshell"
+Repository = "https://github.com/Khadka-Bishal/safeshell"
+Issues = "https://github.com/Khadka-Bishal/safeshell/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/safeshell"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/safeshell"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "PTH",    # flake8-use-pathlib
+    "RUF",    # ruff-specific rules
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "TC003",  # move imports to type-checking block (conflicts with mypy)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["safeshell"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
