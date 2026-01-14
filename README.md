@@ -60,7 +60,8 @@ shell_tool = create_shell_tool("./workspace")
 agent = Agent(
     'openai:gpt-4',
     tools=[shell_tool],
-    system_prompt="You are a coding assistant. Use the shell to run code."
+    system_prompt="You are a coding assistant. Use the shell to run code.")
+```
 
 ## Security Model
 
