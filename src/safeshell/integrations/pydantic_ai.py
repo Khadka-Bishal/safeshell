@@ -1,87 +1,60 @@
-"""PydanticAI integration for safeshell."""
+"""
+PydanticAI integration for safeshell.
+
+Provides helpers to create PydanticAI-compatible tools.
+"""
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from safeshell._types import SandboxToolkit
+from typing import Callable
 
 try:
-    import pydantic_ai  # noqa: F401
-
-    HAS_PYDANTIC_AI = True
+    from pydantic_ai import RunContext, Tool
 except ImportError:
-    HAS_PYDANTIC_AI = False
+    raise ImportError(
+        "PydanticAI integration requires 'pydantic-ai'. "
+        "Install with `pip install safeshell[pydantic-ai]`"
+    )
+
+from safeshell import NetworkAllowlist, NetworkMode, Sandbox
 
 
-def create_pydantic_ai_tools(toolkit: SandboxToolkit) -> list[Callable[..., Any]]:
+def create_shell_tool(
+    cwd: str = ".",
+    network: NetworkMode = NetworkMode.BLOCKED,
+    allowlist: NetworkAllowlist | None = None,
+    timeout: float = 30.0,
+) -> Callable:
     """
-    Create PydanticAI tool functions from a SandboxToolkit.
+    Create a PydanticAI tool function for safe shell execution.
 
-    Args:
-        toolkit: The sandbox toolkit to wrap.
-
-    Returns:
-        List of async functions that can be used as PydanticAI tools.
-
-    Raises:
-        ImportError: If pydantic-ai is not installed.
+    Returns a function decorated with @tool (implicitly or explicitly handled by PydanticAI)
+    that can be registered with an Agent.
 
     Example:
-        >>> toolkit = await create_sandbox_tool(source=".")
-        >>> tools = create_pydantic_ai_tools(toolkit)
-        >>> agent = Agent("openai:gpt-4", tools=tools)
+        >>> from pydantic_ai import Agent
+        >>> shell_tool = create_shell_tool("./project")
+        >>> agent = Agent("openai:gpt-4", tools=[shell_tool])
     """
-    if not HAS_PYDANTIC_AI:
-        raise ImportError(
-            "PydanticAI integration requires pydantic-ai. "
-            "Install with: pip install safeshell[pydantic-ai]"
-        )
 
-    async def bash(command: str) -> str:
+    async def shell_tool(
+        ctx: RunContext, 
+        command: str,
+    ) -> str:
         """
-        Execute a bash command in the sandbox.
-
-        Args:
-            command: The bash command to execute.
-
-        Returns:
-            Command output (stdout) or error message.
+        Execute a shell command safely. 
+        Only allowed operations will succeed.
         """
-        result = await toolkit.bash(command)
-        if result.stderr and not result.success:
-            return f"Error (exit {result.exit_code}): {result.stderr}"
-        return result.stdout
+        async with Sandbox(
+            cwd=cwd,
+            network=network,
+            allowlist=allowlist,
+        ) as sandbox:
+            result = await sandbox.execute(command, timeout=timeout)
+            
+            if result.exit_code != 0:
+                return f"Error (Exit Code {result.exit_code}):\n{result.stderr}"
+            
+            return result.stdout
 
-    async def read_file(path: str) -> str:
-        """
-        Read a file from the sandbox.
-
-        Args:
-            path: Path to the file.
-
-        Returns:
-            File contents.
-        """
-        return await toolkit.read_file(path)
-
-    async def write_file(path: str, content: str) -> str:
-        """
-        Write content to a file in the sandbox.
-
-        Args:
-            path: Path where to write.
-            content: Content to write.
-
-        Returns:
-            Confirmation message.
-        """
-        await toolkit.write_file(path, content)
-        return f"Written to {path}"
-
-    # Add tool prompt as docstring enhancement
-    bash.__doc__ = f"{bash.__doc__}\n\nAvailable tools: {toolkit.tool_prompt}"
-
-    return [bash, read_file, write_file]
+    return shell_tool

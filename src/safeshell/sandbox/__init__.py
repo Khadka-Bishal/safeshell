@@ -1,6 +1,13 @@
-"""Sandbox implementations."""
+"""
+Sandbox backends.
+"""
 
-from safeshell.sandbox._base import Sandbox
-from safeshell.sandbox.local import LocalSandbox
+from safeshell.sandbox.native import NativeSandbox, KernelIsolation
+from safeshell.sandbox.docker import DockerSandbox, DockerConfig
 
-__all__ = ["LocalSandbox", "Sandbox"]
+__all__ = [
+    "NativeSandbox", 
+    "KernelIsolation",
+    "DockerSandbox", 
+    "DockerConfig"
+]

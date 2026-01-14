@@ -37,3 +37,4 @@ site/
 *.md
 !README.md
 !ROADMAP.md
+docs/

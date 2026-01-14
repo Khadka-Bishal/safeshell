@@ -1,86 +1,88 @@
-"""LangChain integration for safeshell."""
+"""
+LangChain integration for safeshell.
+
+Provides a ShellTool that wraps the Sandbox for safe execution.
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from safeshell._types import SandboxToolkit
-
-HAS_LANGCHAIN = False
-_StructuredTool: Any = None
+from typing import Any, Optional, Type
 
 try:
-    import langchain_core.tools
-
-    _StructuredTool = langchain_core.tools.StructuredTool
-    HAS_LANGCHAIN = True
+    from langchain_core.tools import BaseTool
+    from pydantic import BaseModel, Field
 except ImportError:
-    pass
+    raise ImportError(
+        "LangChain integration requires 'langchain-core'. "
+        "Install with `pip install safeshell[langchain]`"
+    )
+
+from safeshell import NetworkAllowlist, NetworkMode, Sandbox
 
 
-def create_langchain_tools(toolkit: SandboxToolkit) -> dict[str, Any]:
+class ShellToolInput(BaseModel):
+    """Input for ShellTool."""
+
+    command: str = Field(
+        ...,
+        description="The shell command to execute. "
+        "Can be any valid shell command allowed by the policy.",
+    )
+
+
+class ShellTool(BaseTool):
     """
-    Create LangChain tools from a SandboxToolkit.
+    Safe shell execution tool for LangChain agents.
 
-    Args:
-        toolkit: The sandbox toolkit to wrap.
-
-    Returns:
-        Dictionary of LangChain StructuredTool instances.
-
-    Raises:
-        ImportError: If langchain-core is not installed.
-
-    Example:
-        >>> toolkit = await create_sandbox_tool(source=".")
-        >>> tools = create_langchain_tools(toolkit)
-        >>> agent = create_react_agent(llm, list(tools.values()))
+    Wraps safeshell's Sandbox to provide secure command execution.
+    Auto-detects Docker/Seatbelt/Landlock isolation.
     """
-    if not HAS_LANGCHAIN:
-        raise ImportError(
-            "LangChain integration requires langchain-core. "
-            "Install with: pip install safeshell[langchain]"
+
+    name: str = "safe_shell"
+    description: str = (
+        "Execute shell commands safely. "
+        "Use this for any task requiring code execution, file manipulation, "
+        "or package installation. "
+        "Blocked operations will return a permission error."
+    )
+    args_schema: Type[BaseModel] = ShellToolInput
+
+    # Configuration
+    cwd: str = Field(default=".", description="Working directory")
+    network: NetworkMode = Field(
+        default=NetworkMode.BLOCKED, description="Network mode"
+    )
+    allowlist: Optional[NetworkAllowlist] = Field(
+        default=None, description="Network allowlist (if mode is ALLOWLIST)"
+    )
+    timeout: float = Field(default=30.0, description="Command timeout in seconds")
+
+    prefer_docker: bool = Field(default=True, description="Prefer Docker if available")
+    
+    def _run(self, command: str, run_manager: Any = None) -> str:
+        """Synchronous run - not supported for async sandbox."""
+        raise NotImplementedError(
+            "ShellTool only supports async execution. "
+            "Use `await tool.arun(command)` instead."
         )
 
-    import asyncio
+    async def _arun(self, command: str, run_manager: Any = None) -> str:
+        """
+        Execute the command asynchronously in the sandbox.
+        """
+        try:
+            async with Sandbox(
+                cwd=self.cwd,
+                network=self.network,
+                allowlist=self.allowlist,
+                prefer_docker=self.prefer_docker
+            ) as sandbox:
+                result = await sandbox.execute(command, timeout=self.timeout)
 
-    def run_bash(command: str) -> str:
-        """Execute a bash command in the sandbox."""
-        result = asyncio.get_event_loop().run_until_complete(toolkit.bash(command))
-        if result.stderr and not result.success:
-            return f"Error (exit {result.exit_code}): {result.stderr}"
-        return result.stdout
+                if result.exit_code != 0:
+                    return f"Error (Exit Code {result.exit_code}):\n{result.stderr}"
+                
+                return result.stdout
 
-    def read_file(path: str) -> str:
-        """Read a file from the sandbox."""
-        return asyncio.get_event_loop().run_until_complete(toolkit.read_file(path))
-
-    def write_file(path: str, content: str) -> str:
-        """Write a file to the sandbox."""
-        asyncio.get_event_loop().run_until_complete(toolkit.write_file(path, content))
-        return f"Written to {path}"
-
-    bash_tool = _StructuredTool.from_function(
-        func=run_bash,
-        name="bash",
-        description=f"Execute bash commands. {toolkit.tool_prompt}",
-    )
-
-    read_tool = _StructuredTool.from_function(
-        func=read_file,
-        name="read_file",
-        description="Read a file from the sandbox filesystem.",
-    )
-
-    write_tool = _StructuredTool.from_function(
-        func=write_file,
-        name="write_file",
-        description="Write content to a file in the sandbox.",
-    )
-
-    return {
-        "bash": bash_tool,
-        "read_file": read_tool,
-        "write_file": write_tool,
-    }
+        except Exception as e:
+            return f"Execution Error: {str(e)}"

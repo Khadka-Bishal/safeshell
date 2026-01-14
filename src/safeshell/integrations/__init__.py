@@ -1,6 +1,7 @@
-"""Framework integrations for safeshell."""
+"""
+Integrations with other AI frameworks.
 
-from safeshell.integrations.langchain import create_langchain_tools
-from safeshell.integrations.pydantic_ai import create_pydantic_ai_tools
-
-__all__ = ["create_langchain_tools", "create_pydantic_ai_tools"]
+These modules are optional and require installing the respective packages:
+- `safeshell[langchain]` for LangChain support
+- `safeshell[pydantic-ai]` for PydanticAI support
+"""
