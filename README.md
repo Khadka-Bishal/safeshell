@@ -9,7 +9,7 @@
 
 Every AI developer eventually faces the same problem: *How do I let my agent run code without destroying my machine?*
 
-**safeshell** solves this with a tiered security model (Docker > Seatbelt > Landlock) that enforces isolation at the kernel level.
+**safeshell** solves this with a robust security model (Seatbelt on macOS, Landlock on Linux) that enforces isolation at the kernel level.
 
 ```bash
 pip install safeshell
@@ -61,41 +61,16 @@ agent = Agent(
     'openai:gpt-4',
     tools=[shell_tool],
     system_prompt="You are a coding assistant. Use the shell to run code."
-)
-```
 
-### Example 3: The "Senior Engineer" Setup
+## Security Model
 
-For maximum safety in production, use Docker with strict resource limits:
-
-```python
-from safeshell import DockerSandbox, DockerConfig
-
-# Force Docker isolation
-config = DockerConfig(
-    image="python:3.11-slim",
-    memory_limit="512m",  # Prevent OOM attacks
-    cpu_limit=0.5,        # Prevent crypto mining
-    network="none"        # Total network isolation
-)
-
-async with DockerSandbox("./workspace", config=config) as sb:
-    # Even if the LLM tries to run a fork bomb,
-    # the container limits stop it. 
-    await sb.execute(untrusted_command)
-```
-## Security Model: Kernel vs Regex
-
-Older sandboxes try to block "bad words" like `rm -rf /` using Regex. This is dangerous and bypassable. 
+Older sandboxes try to block "bad words" like `rm -rf /` using Regex. This is dangerous and bypassable. As noted in [Sandboxing is a Networking Problem](https://www.joinformal.com/blog/using-proxies-to-hide-secrets-from-claude-code/), true security requires isolating the process at the OS and Network layer, not just filtering commands.
 
 **Safeshell uses Kernel Enforcement.**
-
-As noted in [Sandboxing is a Networking Problem](https://www.joinformal.com/blog/using-proxies-to-hide-secrets-from-claude-code/), true security requires isolating the process at the OS and Network layer—not just filtering commands.
 
 | Threat | Safeshell Protection | Mechanism |
 |--------|----------------------|-----------|
 | `rm -rf /` | **Blocked** | Kernel denies write access to `/` |
 | `curl | sh` | **Blocked** | Network access denied by default |
-| `fork()(:){:|:&};:` | **Blocked** | Docker container CPU/PIDs limits |
 | `cat /etc/shadow` | **Blocked** | Access blocked to sensitive paths |
 | `> ~/.bashrc` | **Blocked** | Write denied outside workspace |

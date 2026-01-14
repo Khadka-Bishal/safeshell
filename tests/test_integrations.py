@@ -7,9 +7,6 @@ from safeshell import NativeSandbox as LocalSandbox, NetworkMode
 
 def test_langchain_import_error():
     """Test that importing without dependencies raises ImportError."""
-    # We simulate missing dependency by using a separate process or mocking, 
-    # but for unit tests we assume dev deps might be present.
-    # If standard import works, we skip this check.
     try:
         from safeshell.integrations.langchain import ShellTool
     except ImportError:
@@ -24,7 +21,7 @@ async def test_langchain_tool():
     except ImportError:
         pytest.skip("langchain-core not installed")
 
-    tool = ShellTool(cwd=".", network=NetworkMode.BLOCKED, prefer_docker=False)
+    tool = ShellTool(cwd=".", network=NetworkMode.BLOCKED)
     
     # Test arguments schema
     assert tool.args_schema

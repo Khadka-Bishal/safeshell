@@ -57,8 +57,6 @@ class ShellTool(BaseTool):
     )
     timeout: float = Field(default=30.0, description="Command timeout in seconds")
 
-    prefer_docker: bool = Field(default=True, description="Prefer Docker if available")
-    
     def _run(self, command: str, run_manager: Any = None) -> str:
         """Synchronous run - not supported for async sandbox."""
         raise NotImplementedError(
@@ -75,7 +73,6 @@ class ShellTool(BaseTool):
                 cwd=self.cwd,
                 network=self.network,
                 allowlist=self.allowlist,
-                prefer_docker=self.prefer_docker
             ) as sandbox:
                 result = await sandbox.execute(command, timeout=self.timeout)
 
