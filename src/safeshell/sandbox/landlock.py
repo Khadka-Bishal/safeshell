@@ -9,6 +9,7 @@ Uses kernel-level restrictions:
 from __future__ import annotations
 
 import platform
+import subprocess
 from pathlib import Path
 
 
@@ -22,6 +23,26 @@ def is_landlock_available() -> bool:
         major, minor = int(release[0]), int(release[1].split("-")[0])
         return major > 5 or (major == 5 and minor >= 13)
     except (IndexError, ValueError):
+        return False
+
+
+def supports_namespaces() -> bool:
+    """
+    Check if user namespaces are supported/allowed in this environment.
+    Many CI/Docker environments block unshare.
+    """
+    if platform.system() != "Linux":
+        return False
+        
+    try:
+        # Try to run a dummy command in a new user namespace
+        result = subprocess.run(
+            ["unshare", "--user", "--map-root-user", "true"],
+            capture_output=True,
+            check=False
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, PermissionError, OSError):
         return False
 
 

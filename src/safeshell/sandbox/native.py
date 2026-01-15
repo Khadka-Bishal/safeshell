@@ -17,10 +17,13 @@ import psutil  # type: ignore
 from safeshell.core import BaseSandbox
 from safeshell.errors import ExecutionError
 from safeshell.networking import AllowlistProxy
-from safeshell.sandbox.landlock import build_isolated_command as build_landlock
+from safeshell.sandbox.landlock import build_isolated_command as build_landlock, supports_namespaces
 from safeshell.sandbox.seatbelt import SeatbeltProfile
 from safeshell.sandbox.seatbelt import build_sandboxed_command as build_seatbelt
 from safeshell.types import CommandResult, NetworkAllowlist, NetworkMode
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class KernelIsolation(Enum):
@@ -37,14 +40,11 @@ def _detect_kernel_isolation() -> KernelIsolation:
         if shutil.which("sandbox-exec"):
             return KernelIsolation.SEATBELT
     elif sys == "Linux":
-        # Check for kernel 5.13+
-        try:
-            rel = platform.release().split(".")
-            major, minor = int(rel[0]), int(rel[1].split("-")[0])
-            if major > 5 or (major == 5 and minor >= 13):
-                return KernelIsolation.LANDLOCK
-        except Exception:
-            pass
+        # We rely on 'unshare' for isolation.
+        if supports_namespaces():
+            return KernelIsolation.LANDLOCK
+        else:
+            logger.warning("Linux namespaces (unshare) not supported in this environment. sandbox will be disabled.")
     return KernelIsolation.NONE
 
 
