@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "safeshell"
-version = "1.0.0"
+version = "1.0.1"
 description = "Secure, sandboxed bash tool access for AI agents"
 readme = "README.md"
 license = "MIT"
