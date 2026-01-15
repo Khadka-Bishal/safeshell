@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 import os
 import platform
 import shutil
@@ -17,11 +18,11 @@ import psutil  # type: ignore
 from safeshell.core import BaseSandbox
 from safeshell.errors import ExecutionError
 from safeshell.networking import AllowlistProxy
-from safeshell.sandbox.landlock import build_isolated_command as build_landlock, supports_namespaces
+from safeshell.sandbox.landlock import build_isolated_command as build_landlock
+from safeshell.sandbox.landlock import supports_namespaces
 from safeshell.sandbox.seatbelt import SeatbeltProfile
 from safeshell.sandbox.seatbelt import build_sandboxed_command as build_seatbelt
 from safeshell.types import CommandResult, NetworkAllowlist, NetworkMode
-import logging
 
 logger = logging.getLogger(__name__)
 

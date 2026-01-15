@@ -33,7 +33,7 @@ def supports_namespaces() -> bool:
     """
     if platform.system() != "Linux":
         return False
-        
+
     try:
         # Try to run a dummy command in a new user namespace
         result = subprocess.run(
