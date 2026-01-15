@@ -47,12 +47,12 @@ MANDATORY_DENY_WRITE_SUBPATHS: tuple[str, ...] = (
 class SeatbeltProfile:
     """
     Configuration for generating a macOS Seatbelt (sandbox-exec) profile.
-    
+
     The profile uses a deny-default model with explicit allows:
     - Read: Allowed for system paths and workspace
     - Write: Allowed ONLY for workspace and temp directories
     - Network: Blocked by default (can be enabled)
-    
+
     Example:
         >>> profile = SeatbeltProfile(workspace=Path.cwd())
         >>> sbpl = profile.generate()
@@ -80,11 +80,11 @@ class SeatbeltProfile:
     def generate(self) -> str:
         """
         Generate the Seatbelt profile in SBPL format.
-        
+
         Uses a "broad read, restricted write" model:
         - Read access: Entire filesystem (needed for shell/tools to function)
         - Write access: Only workspace and temp directories
-        
+
         Returns:
             String containing the complete SBPL profile.
         """
@@ -201,10 +201,10 @@ class SeatbeltProfile:
     def write_to_file(self, path: Path | None = None) -> Path:
         """
         Write the profile to a file.
-        
+
         Args:
             path: Destination path. If None, creates a temp file.
-            
+
         Returns:
             Path to the written profile file.
         """
@@ -220,7 +220,7 @@ class SeatbeltProfile:
 def is_seatbelt_available() -> bool:
     """
     Check if sandbox-exec is available on this system.
-    
+
     Returns:
         True if running on macOS with sandbox-exec available.
     """
@@ -248,12 +248,12 @@ def build_sandboxed_command(
 ) -> list[str]:
     """
     Build a command line that runs the given command inside a Seatbelt sandbox.
-    
+
     Args:
         command: The command to execute.
         profile: Seatbelt profile configuration.
         shell: If True, wrap command in bash -c (for shell expansion).
-        
+
     Returns:
         List of arguments for subprocess.run().
     """

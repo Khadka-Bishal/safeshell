@@ -12,7 +12,7 @@ import shutil
 from enum import Enum, auto
 from subprocess import PIPE
 
-import psutil
+import psutil  # type: ignore
 
 from safeshell.core import BaseSandbox
 from safeshell.errors import ExecutionError

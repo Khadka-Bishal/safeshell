@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import abc
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from safeshell.types import CommandResult
+if TYPE_CHECKING:
+    from safeshell.types import CommandResult
 
 
 class BaseSandbox(abc.ABC):
@@ -28,11 +30,11 @@ class BaseSandbox(abc.ABC):
     ) -> CommandResult:
         """
         Execute a shell command.
-        
+
         Args:
             command: Shell command string.
             timeout: Execution timeout in seconds.
-            
+
         Returns:
             CommandResult with stdout/stderr/exit_code.
         """
@@ -46,5 +48,10 @@ class BaseSandbox(abc.ABC):
     async def __aenter__(self) -> BaseSandbox:
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object | None
+    ) -> None:
         await self.close()

@@ -19,7 +19,7 @@ def Sandbox(
 ) -> BaseSandbox:
     """
     Create a sandbox instance.
-    
+
     Uses NativeSandbox (Seatbelt on macOS, Landlock on Linux).
     """
     return NativeSandbox(cwd, timeout=timeout, network=network, allowlist=allowlist)

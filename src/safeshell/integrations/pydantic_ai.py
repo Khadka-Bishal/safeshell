@@ -7,16 +7,22 @@ Provides helpers to create PydanticAI-compatible tools.
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Any
 
 try:
-    from pydantic_ai import RunContext, Tool
+    import pydantic_ai  # type: ignore # noqa: F401
 except ImportError:
     raise ImportError(
         "PydanticAI integration requires 'pydantic-ai'. "
         "Install with `pip install safeshell[pydantic-ai]`"
     ) from None
 
+from typing import TYPE_CHECKING
+
 from safeshell import NetworkAllowlist, NetworkMode, Sandbox
+
+if TYPE_CHECKING:
+    from pydantic_ai import RunContext
 
 
 def create_shell_tool(
@@ -24,7 +30,7 @@ def create_shell_tool(
     network: NetworkMode = NetworkMode.BLOCKED,
     allowlist: NetworkAllowlist | None = None,
     timeout: float = 30.0,
-) -> Callable:
+) -> Callable[..., Any]:
     """
     Create a PydanticAI tool function for safe shell execution.
 
@@ -38,11 +44,11 @@ def create_shell_tool(
     """
 
     async def shell_tool(
-        ctx: RunContext,
+        _ctx: RunContext,
         command: str,
     ) -> str:
         """
-        Execute a shell command safely. 
+        Execute a shell command safely.
         Only allowed operations will succeed.
         """
         async with Sandbox(

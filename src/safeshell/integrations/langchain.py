@@ -15,7 +15,7 @@ except ImportError:
     raise ImportError(
         "LangChain integration requires 'langchain-core'. "
         "Install with `pip install safeshell[langchain]`"
-    )
+    ) from None
 
 from safeshell import NetworkAllowlist, NetworkMode, Sandbox
 
@@ -64,7 +64,7 @@ class ShellTool(BaseTool):
             "Use `await tool.arun(command)` instead."
         )
 
-    async def _arun(self, command: str, run_manager: Any = None) -> str:
+    async def _arun(self, command: str, _run_manager: Any = None) -> str:
         """
         Execute the command asynchronously in the sandbox.
         """

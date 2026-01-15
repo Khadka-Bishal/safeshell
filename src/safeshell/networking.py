@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import socket
 from typing import TYPE_CHECKING
 
 import h11
@@ -35,7 +36,7 @@ class AllowlistProxy:
             self._handle_client,
             host="127.0.0.1",
             port=0,
-            family=asyncio.AF_INET
+            family=socket.AF_INET
         )
 
         sockets = self._server.sockets
@@ -106,7 +107,7 @@ class AllowlistProxy:
 
             if self.allowlist.is_allowed(host, port):
                 # Accept tunnel
-                res = h11.Response(status_code=200, reason=b"Connection Established")
+                res = h11.Response(status_code=200, reason=b"Connection Established", headers=[])
                 writer.write(conn.send(res))
                 writer.write(conn.send(h11.EndOfMessage()))
                 await writer.drain()
@@ -121,7 +122,7 @@ class AllowlistProxy:
              await self._send_error(conn, writer, 501, "Only CONNECT is supported")
 
     async def _send_error(self, conn: h11.Connection, writer: StreamWriter, code: int, msg: str) -> None:
-        res = h11.Response(status_code=code, reason=msg.encode())
+        res = h11.Response(status_code=code, reason=msg.encode(), headers=[])
         writer.write(conn.send(res))
         writer.write(conn.send(h11.EndOfMessage()))
         await writer.drain()
