@@ -42,7 +42,6 @@ MANDATORY_DENY_WRITE_SUBPATHS: tuple[str, ...] = (
     ".cursor",
 )
 
-
 @dataclass
 class SeatbeltProfile:
     """

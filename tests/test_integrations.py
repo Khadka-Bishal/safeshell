@@ -4,7 +4,7 @@ import pytest
 
 from safeshell import NetworkMode
 
-# --- LangChain Tests ---
+# LangChain Tests
 
 def test_langchain_import_error():
     """Test that importing without dependencies raises ImportError."""
@@ -38,7 +38,7 @@ async def test_langchain_tool():
     assert "Exit Code 1" in result
 
 
-# --- PydanticAI Tests ---
+# PydanticAI Tests
 
 @pytest.mark.asyncio
 async def test_pydantic_ai_tool():

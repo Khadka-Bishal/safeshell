@@ -2,7 +2,6 @@
 Abstract base class for sandbox implementations.
 Enforces consistent interface across Docker and Native backends.
 """
-
 from __future__ import annotations
 
 import abc
@@ -11,7 +10,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from safeshell.types import CommandResult
-
 
 class BaseSandbox(abc.ABC):
     """Interface for all sandbox implementations."""

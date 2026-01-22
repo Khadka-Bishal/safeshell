@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class KernelIsolation(Enum):
     """Available kernel isolation mechanisms."""
+
     NONE = auto()
     SEATBELT = auto()
     LANDLOCK = auto()
@@ -45,7 +46,9 @@ def _detect_kernel_isolation() -> KernelIsolation:
         if supports_namespaces():
             return KernelIsolation.LANDLOCK
         else:
-            logger.warning("Linux namespaces (unshare) not supported in this environment. sandbox will be disabled.")
+            logger.warning(
+                "Linux namespaces (unshare) not supported in this environment. sandbox will be disabled."
+            )
     return KernelIsolation.NONE
 
 
@@ -93,10 +96,7 @@ class NativeSandbox(BaseSandbox):
             pass
 
     async def execute(
-        self,
-        command: str,
-        *,
-        timeout: float | None = None
+        self, command: str, *, timeout: float | None = None
     ) -> CommandResult:
         if self._closed:
             raise ExecutionError("Sandbox is closed.")
@@ -116,12 +116,14 @@ class NativeSandbox(BaseSandbox):
             try:
                 self._proxy_port = await local_proxy.start()
                 proxy_url = f"http://127.0.0.1:{self._proxy_port}"
-                env.update({
-                    "HTTP_PROXY": proxy_url,
-                    "HTTPS_PROXY": proxy_url,
-                    "http_proxy": proxy_url,
-                    "https_proxy": proxy_url
-                })
+                env.update(
+                    {
+                        "HTTP_PROXY": proxy_url,
+                        "HTTPS_PROXY": proxy_url,
+                        "http_proxy": proxy_url,
+                        "https_proxy": proxy_url,
+                    }
+                )
             except Exception as e:
                 raise ExecutionError(f"Failed to start proxy: {e}") from e
 
@@ -142,7 +144,7 @@ class NativeSandbox(BaseSandbox):
                 return CommandResult(
                     stdout=stdout.decode(errors="replace"),
                     stderr=stderr.decode(errors="replace"),
-                    exit_code=proc.returncode or 0
+                    exit_code=proc.returncode or 0,
                 )
 
             except TimeoutError:
@@ -153,10 +155,7 @@ class NativeSandbox(BaseSandbox):
                     await proc.wait()
 
                 return CommandResult(
-                    stdout="",
-                    stderr="Command timed out.",
-                    exit_code=-1,
-                    timed_out=True
+                    stdout="", stderr="Command timed out.", exit_code=-1, timed_out=True
                 )
 
         except Exception as e:

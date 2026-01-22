@@ -9,7 +9,7 @@
 
 Every AI developer eventually faces the same problem: *How do I let my agent run code without destroying my machine?*
 
-**safeshell** solves this with a robust security model (Seatbelt on macOS, Landlock on Linux) that enforces isolation at the kernel level.
+**safeshell** solves this with a security model (Seatbelt on macOS, Landlock on Linux) that enforces isolation at the kernel level.
 
 ```bash
 pip install safeshell
