@@ -7,6 +7,7 @@ from safeshell.errors import ConfigurationError, SafeShellError
 from safeshell.sandbox.native import NativeSandbox
 from safeshell.types import CommandResult, NetworkAllowlist, NetworkMode
 
+
 def Sandbox(
     cwd: str,
     *,
